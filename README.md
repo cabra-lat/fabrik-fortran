@@ -15,6 +15,12 @@ The implementation follows the published algorithm description:
 - [yamahigashi/fabric-fabrik-fullbody-ik](https://github.com/yamahigashi/fabric-fabrik-fullbody-ik)
   was inspected as a design reference for full-body/closed-loop FABRIK. It is an
   MIT-licensed discontinued Fabric Engine project; no source was copied.
+- Xu et al., *A Combined Inverse Kinematics Algorithm Using FABRIK with
+  Optimization* (arXiv:2209.02532, 2022),
+  <https://arxiv.org/abs/2209.02532>, documents unstable FABRIK convergence
+  under very tight Cartesian-error constraints and seeds an SQP refiner with the
+  FABRIK result. This motivates the explicit `FABRIK_NOT_CONVERGED` status; the
+  optimization stage is deliberately out of scope for this first core.
 - The original article and reference implementations were used only as
   algorithm/design references. This implementation, API, tests, and
   documentation were written for this prototype.

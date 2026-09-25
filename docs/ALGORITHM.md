@@ -4,8 +4,15 @@ References: Andreas Aristidou, *FABRIK: A Fast, Iterative Solver for the
 Inverse Kinematics Problem* (Eurographics 2011), summary page:
 <https://andreasaristidou.com/Fabrik>; and the MIT-licensed discontinued
 `yamahigashi/fabric-fabrik-fullbody-ik` project for full-body/closed-loop design
-context. This document describes an independent single-chain implementation;
-it contains no copied reference code.
+context; and Xu et al., *A Combined Inverse Kinematics Algorithm Using FABRIK
+with Optimization* (arXiv:2209.02532) for the observed instability of FABRIK
+under very tight error constraints. This document describes an independent
+single-chain implementation; it contains no copied reference code.
+
+Xu et al. refine a FABRIK result with SQP when a high-accuracy solver is needed.
+This core keeps the contract smaller and deterministic: it reports
+`FABRIK_NOT_CONVERGED` when the iteration budget is exhausted at a tolerance it
+cannot reach, and deliberately ships no optimizer stage.
 
 For `n` joints, segment `i` has length `length(i)` from joint `i` to joint
 `i + 1` in row-major coordinates.
