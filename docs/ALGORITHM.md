@@ -14,6 +14,22 @@ This core keeps the contract smaller and deterministic: it reports
 `FABRIK_NOT_CONVERGED` when the iteration budget is exhausted at a tolerance it
 cannot reach, and deliberately ships no optimizer stage.
 
+Primary sources for the algorithm and its known failure modes:
+
+- Aristidou & Lasenby, *FABRIK: A fast, iterative solver for the Inverse
+  Kinematics problem*, Graphical Models 73(5), 2011,
+  <https://doi.org/10.1016/j.gmod.2011.05.003>.
+- Aristidou, Chrysanthou & Lasenby, *Extending FABRIK with model constraints*,
+  Computer Animation and Virtual Worlds, 2015,
+  <https://doi.org/10.1002/cav.1630> (closed loops, leaf joints, fixed
+  inter-joint distance, unreachable-target behaviour, convergence proof).
+- Santos et al., *FABRIK-R: An Extension Developed Based on FABRIK for Robotics
+  Manipulators*, IEEE Access, 2021,
+  <https://doi.org/10.1109/ACCESS.2021.3070693> (singularities on 1-DOF joints).
+- Xu et al., *A Combined Inverse Kinematics Algorithm Using FABRIK with
+  Optimization*, arXiv:2209.02532, 2022,
+  <https://arxiv.org/abs/2209.02532> (convergence under tight error bounds).
+
 For `n` joints, segment `i` has length `length(i)` from joint `i` to joint
 `i + 1` in row-major coordinates.
 

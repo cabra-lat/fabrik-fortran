@@ -21,6 +21,17 @@ The implementation follows the published algorithm description:
   under very tight Cartesian-error constraints and seeds an SQP refiner with the
   FABRIK result. This motivates the explicit `FABRIK_NOT_CONVERGED` status; the
   optimization stage is deliberately out of scope for this first core.
+
+The FABRIK algorithm itself is due to Aristidou and Lasenby, *FABRIK: A fast,
+iterative solver for the Inverse Kinematics problem*, Graphical Models 73(5),
+2011, <https://doi.org/10.1016/j.gmod.2011.05.003>; the model-constraint,
+closed-loop and unreachable-target extensions are Aristidou, Chrysanthou and
+Lasenby, *Extending FABRIK with model constraints*, Computer Animation and
+Virtual Worlds, 2015, <https://doi.org/10.1002/cav.1630>; and the
+single-DOF-joint manipulator treatment is Santos et al., *FABRIK-R: An
+Extension Developed Based on FABRIK for Robotics Manipulators*, IEEE Access,
+2021, <https://doi.org/10.1109/ACCESS.2021.3070693>. These works are cited as
+the source of the algorithm; no code, text, or figures were copied from them.
 - The original article and reference implementations were used only as
   algorithm/design references. This implementation, API, tests, and
   documentation were written for this prototype.
