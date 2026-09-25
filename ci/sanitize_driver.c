@@ -23,6 +23,7 @@ int main(void) {
     float lengths[2] = {1.0f, 1.0f};
     float target[3] = {1.0f, 1.0f, 0.0f};
     float out[9];
+    float sentinel[9] = {7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f};
     float measured[2];
     float far_target[3] = {0.0f, 4.0f, 0.0f};
     float nan_target[3] = {NAN, 1.0f, 0.0f};
@@ -46,15 +47,10 @@ int main(void) {
     status = fabrik_solve_f32(joints, 3, lengths, far_target, 1, 1.0e-5f, 64, out, measured);
     expect(status == FABRIK_UNREACHABLE, "unreachable target is reported");
 
+    memcpy(out, sentinel, sizeof(out));
     status = fabrik_solve_f32(joints, 3, lengths, nan_target, 1, 1.0e-5f, 64, out, NULL);
     expect(status == FABRIK_INVALID_ARGUMENT, "NaN target is rejected");
-    for (i = 0; i < 9; i++) {
-        if (!isfinite(out[i])) {
-            failures++;
-            printf("FAIL  rejected input left non-finite output at %d\n", i);
-            break;
-        }
-    }
+    expect(memcmp(out, sentinel, sizeof(out)) == 0, "rejected input leaves C output unchanged");
 
     status = fabrik_solve_f32(joints, 0, lengths, target, 1, 1.0e-5f, 64, out, &residual);
     expect(status == FABRIK_INVALID_ARGUMENT, "zero-joint chain is rejected");
