@@ -14,6 +14,24 @@ This core keeps the contract smaller and deterministic: it reports
 `FABRIK_NOT_CONVERGED` when the iteration budget is exhausted at a tolerance it
 cannot reach, and deliberately ships no optimizer stage.
 
+## Input validation
+
+Every caller-supplied value is screened for finiteness before any arithmetic.
+`x < 0` is false for NaN, so range checks alone cannot reject it; a NaN target
+would otherwise propagate silently through the iterations. Non-finite joints,
+target, segment lengths or tolerance return `FABRIK_INVALID_ARGUMENT` and leave
+the caller's output buffer untouched.
+
+## Convergence reporting
+
+FABRIK converges linearly near the solution, so a tight tolerance combined with a
+small iteration budget legitimately ends in `FABRIK_NOT_CONVERGED` - the status
+exists so callers can distinguish "did not finish" from "cannot finish". The
+property test asserts each status against its own invariant: `OK` implies the
+residual is inside tolerance and the target within reach, `NOT_CONVERGED` implies
+the residual is still above tolerance, `UNREACHABLE` implies the target lies
+outside the chain's total length.
+
 Primary sources for the algorithm and its known failure modes:
 
 - Aristidou & Lasenby, *FABRIK: A fast, iterative solver for the Inverse

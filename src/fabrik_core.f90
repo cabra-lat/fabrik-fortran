@@ -1,6 +1,7 @@
 module fabrik_core
   use, intrinsic :: iso_c_binding, only: c_float, c_int
   use, intrinsic :: iso_fortran_env, only: real32
+  use, intrinsic :: ieee_arithmetic, only: ieee_is_finite
   implicit none
   private
 
@@ -15,6 +16,15 @@ module fabrik_core
   public :: solve_f32, status_string
 
 contains
+
+  pure function all_finite(values) result(ok)
+    real(real32), intent(in) :: values(:)
+    logical :: ok
+    ! NaN and Inf inputs would silently propagate: `x < 0` is false for NaN, so
+    ! range checks alone cannot reject them. Every caller-supplied vector is
+    ! screened here and reported as FABRIK_INVALID_ARGUMENT instead.
+    ok = all(ieee_is_finite(values))
+  end function all_finite
 
   pure function distance(a, b) result(value)
     real(real32), intent(in) :: a(3), b(3)
@@ -47,9 +57,24 @@ contains
     real(real32) :: base(3), direction(3)
 
     residual = 0.0_c_float
-    if (joint_count < 2 .or. max_iterations < 1 .or. tolerance < 0.0_c_float) then
+    if (joint_count < 2 .or. max_iterations < 1) then
       status = FABRIK_INVALID_ARGUMENT
       return
+    end if
+    if (.not. ieee_is_finite(tolerance) .or. tolerance < 0.0_c_float) then
+      status = FABRIK_INVALID_ARGUMENT
+      return
+    end if
+    if (.not. all_finite(reshape(joints(1:3, 1:joint_count), [3 * joint_count])) .or. &
+        .not. all_finite(target)) then
+      status = FABRIK_INVALID_ARGUMENT
+      return
+    end if
+    if (present(lengths)) then
+      if (.not. all_finite(lengths(1:joint_count - 1))) then
+        status = FABRIK_INVALID_ARGUMENT
+        return
+      end if
     end if
 
     original = real(joints(1:3, 1:joint_count), real32)

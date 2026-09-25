@@ -31,3 +31,20 @@ jobs:
         run: fpm run --profile release
       - name: Diff hygiene
         run: git diff --check
+
+  sanitizers:
+    # FPM cannot inject sanitizer flags, so the C ABI - the contract other
+    # languages consume - is built with ASan/UBSan directly and driven by a
+    # small C program that covers aliased buffers, null optional pointers and
+    # non-finite input.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: fortran-lang/setup-fortran@v1
+        with:
+          compiler: gcc
+          version: latest
+      - name: ASan/UBSan C ABI driver
+        run: bash ci/sanitize.sh
+      - name: Diff hygiene
+        run: git diff --check

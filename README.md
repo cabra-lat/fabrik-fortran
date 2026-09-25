@@ -55,9 +55,22 @@ nix build .#packages.x86_64-linux.default \
   --no-link --print-out-paths
 ```
 
-The tests cover convergence, unreachable targets, zero-length chains, and
-bitwise determinism. `fpm_status_string` is available for diagnostics; callers
-must use the numeric status as the stable contract.
+The tests cover convergence, unreachable targets, zero-length chains, bitwise
+determinism, rejection of NaN/Inf input, minimum chain size, and a
+deterministic 200-chain property test that asserts every status is
+self-consistent and that segment lengths survive every solve.
+`fpm_status_string` is available for diagnostics; callers must use the numeric
+status as the stable contract.
+
+> If you change compiler flags or switch profiles, delete `build/` before
+> rebuilding. `fpm clean` does not remove the per-flag-set directories FPM
+> keeps, and a stale object can silently be linked into the test binary.
+
+An ASan/UBSan build of the C ABI is driven by `ci/sanitize.sh` (run by CI):
+
+```sh
+bash ci/sanitize.sh
+```
 
 ## Flat ABI
 
@@ -68,8 +81,9 @@ C/C++.
 
 The FPM package and Nix derivation build a static library. Binaries and build
 directories are ignored and are not source dependencies. GitHub CI runs the
-FPM tests, build, and example on Linux, macOS, and Windows; Nix supplies the
-locally verified reproducible derivation.
+FPM tests, build, and example on Linux, macOS, and Windows, plus an
+ASan/UBSan job over the C ABI; Nix supplies the locally verified reproducible
+derivation.
 
 ## License
 
