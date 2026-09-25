@@ -18,6 +18,7 @@ program test_fabrik_core
   call test_minimum_chain(passed, failures)
   call test_randomized_chains(passed, failures)
   call test_anchored_root_never_moves(passed, failures)
+  call test_anchored_root_across_reach_changes(passed, failures)
 
   ! List-directed output: these summaries mix words and counts, and hand-written
   ! format strings silently mismatched twice while debugging this suite.
@@ -111,6 +112,40 @@ contains
     end do
     call expect(.true., 'anchored root never moves on 24 reachable solves', passed, failures)
   end subroutine test_anchored_root_never_moves
+
+  ! Same invariant, but with the target crossing IN AND OUT of the reachable
+  ! sphere, which is what a rig actually does. The unreachable branch is a
+  ! separate early return, so it has to be covered by its own test.
+  subroutine test_anchored_root_across_reach_changes(passed, failures)
+    integer, intent(inout) :: passed, failures
+    real(real32) :: joints(3, 3), target(3), lengths(2), out(3, 3), residual
+    real(real32) :: root_before(3)
+    integer(c_int) :: status
+    integer :: i
+    real(real32) :: angle
+
+    lengths = [0.30_real32, 0.28_real32]
+    do i = 1, 90
+      joints = reshape([-0.2_real32, 1.35_real32, 0.0_real32, &
+                         -0.2_real32, 1.05_real32, 0.0_real32, &
+                         -0.2_real32, 0.77_real32, 0.0_real32], [3, 3])
+      root_before = joints(:, 1)
+      ! Sweep from well inside the 0.58 m reach to well outside it.
+      angle = 6.2831853_real32 * real(i, real32) / 90.0_real32
+      target = [-0.2_real32 + 1.10_real32 * cos(angle), 1.20_real32, -0.50_real32 * sin(angle)]
+      status = solve_f32(joints, 3_c_int, lengths, target, 1_c_int, &
+        1.0e-5_real32, 64_c_int, out, residual)
+      if (status == FABRIK_INVALID_ARGUMENT .or. status == FABRIK_DEGENERATE_CHAIN) then
+        call expect(.false., 'sweep stays a valid request', passed, failures)
+        return
+      end if
+      if (distance_to(out(:, 1), root_before) > 1.0e-5_real32) then
+        call expect(.false., 'anchored root holds across reach changes', passed, failures)
+        return
+      end if
+    end do
+    call expect(.true., 'anchored root holds across 90 in/out-of-reach solves', passed, failures)
+  end subroutine test_anchored_root_across_reach_changes
 
   subroutine test_unreachable_failure(passed, failures)
     integer, intent(inout) :: passed, failures
