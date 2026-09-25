@@ -34,11 +34,16 @@ outside the chain's total length.
 
 Primary sources for the algorithm and its known failure modes:
 
+All four were read in full text (the 2011 and 2015 papers from author copies,
+Santos et al. from the IEEE Access open-access PDF, Xu et al. from arXiv), and
+are cited for what they actually say:
+
 - Aristidou & Lasenby, *FABRIK: A fast, iterative solver for the Inverse
-  Kinematics problem*, Graphical Models 73(5), 2011,
-  <https://doi.org/10.1016/j.gmod.2011.05.003>.
+  Kinematics problem*, Graphical Models 73(5), 2011, pp. 243-260,
+  <https://doi.org/10.1016/j.gmod.2011.05.003> (the algorithm, its pseudo-code
+  and unreachable-target case).
 - Aristidou, Chrysanthou & Lasenby, *Extending FABRIK with model constraints*,
-  Computer Animation and Virtual Worlds, 2015,
+  Computer Animation and Virtual Worlds 27(1), 2015, pp. 35-57,
   <https://doi.org/10.1002/cav.1630> (closed loops, leaf joints, fixed
   inter-joint distance, unreachable-target behaviour, convergence proof).
 - Santos et al., *FABRIK-R: An Extension Developed Based on FABRIK for Robotics
@@ -47,6 +52,15 @@ Primary sources for the algorithm and its known failure modes:
 - Xu et al., *A Combined Inverse Kinematics Algorithm Using FABRIK with
   Optimization*, arXiv:2209.02532, 2022,
   <https://arxiv.org/abs/2209.02532> (convergence under tight error bounds).
+
+One design point taken from reading the 2015 paper rather than guessed: that
+paper enforces joint restrictions by **re-positioning the target** into the
+allowable bounds at every iteration, so the result stays a true FABRIK solution
+of a clamped target. The angle limits in the Godot adapter deliberately use a
+different mechanism - a post-solve projection of the solved chain - which keeps
+the anchored root and every segment length exact and is much simpler, but
+produces a pose that is not a FABRIK solution of any single target. That is a
+documented difference, not an oversight; see the adapter's `docs/API.md`.
 
 For `n` joints, segment `i` has length `length(i)` from joint `i` to joint
 `i + 1` in row-major coordinates.
@@ -60,13 +74,23 @@ For `n` joints, segment `i` has length `length(i)` from joint `i` to joint
    extend the chain in a deterministic straight line. Return `UNREACHABLE` and
    the final residual; this is a failure, never a false successful solve.
 5. Repeat until tolerance or iteration budget:
-   - Backward: pin tip to target, then walk toward the root preserving each
-     segment length.
-   - Forward: pin the root (original root when anchored, previous tip when
-     free), then walk toward the tip preserving each segment length.
+   - Forward reaching: pin the tip to the target, then walk toward the root
+     preserving each segment length.
+   - Backward reaching: pin the root (original root when anchored, previous tip
+     when free), then walk toward the tip preserving each segment length.
    - Return `OK` when the tip is within tolerance.
 6. Return `NOT_CONVERGED` with the last deterministic chain if the budget is
    exhausted.
+
+### Which pass is called what
+
+The two passes are named the way the papers name them, which is the opposite of
+how the code reads top to bottom. Aristidou & Lasenby 2011 label the tip-ward
+sweep "STAGE 1: FORWARD REACHING" (`pn = t`, then walk toward the root) and the
+root-pinned sweep "STAGE 2: BACKWARD REACHING" (`p1 = b`, then walk toward the
+tip); the 2015 paper's Figure 5 caption and its "first forward and later
+backward" wording match. `p1 = b` in the 2011 pseudo-code is the same root
+re-pinning that step 5 performs every iteration for an anchored chain.
 
 The implementation performs no randomness, time dependence, threading, or
 compiler-specific ABI operation. All status values are stable integers in

@@ -5,12 +5,16 @@
 - `yamahigashi/fabric-fabrik-fullbody-ik` was reviewed for full-body/closed-loop
   design ideas. It is MIT licensed but its source was not copied; this package
   intentionally implements only a deterministic single chain.
-- The FABRIK publications were read as algorithm references: Aristidou &
-  Lasenby (Graphical Models, 2011, doi:10.1016/j.gmod.2011.05.003), Aristidou,
-  Chrysanthou & Lasenby (CAVW, 2015, doi:10.1002/cav.1630) and Santos et al.
-  (IEEE Access, 2021, doi:10.1109/ACCESS.2021.3070693). They are cited in the
-  documentation; no code, text, or figures were copied. The implementation in
-  `src/` was written from the algorithm description.
+- The FABRIK publications were read in full text as algorithm references:
+  Aristidou & Lasenby (Graphical Models 73(5), 2011,
+  doi:10.1016/j.gmod.2011.05.003), Aristidou, Chrysanthou & Lasenby (CAVW 27(1),
+  2015, doi:10.1002/cav.1630) and Santos et al. (IEEE Access, 2021,
+  doi:10.1109/ACCESS.2021.3070693). They are cited in the documentation; no
+  code, text, or figures were copied. The implementation in `src/` was written
+  from the algorithm description. Reading the 2011 pseudo-code is what fixed the
+  name of the two passes: they are "forward reaching" (tip to target, then
+  towards the root) and "backward reaching" (root re-pinned, then towards the
+  tip), which is the opposite of the order the code reads in.
 - Xu et al., *A Combined Inverse Kinematics Algorithm Using FABRIK with
   Optimization* (arXiv:2209.02532), was read as an algorithm reference for
   convergence behaviour under tight error constraints. It is cited in the

@@ -121,7 +121,13 @@ contains
     end if
 
     do iteration = 1, max_iterations
-      ! Backward: place the tip on the target and work toward the root.
+      ! FORWARD REACHING: place the tip on the target and work toward the root.
+      !
+      ! The name is the papers', and it is the opposite of what it looks like:
+      ! Aristidou & Lasenby 2011 label this "STAGE 1: FORWARD REACHING" (the
+      ! chain reaches forward, onto the target), and Aristidou, Chrysanthou &
+      ! Lasenby 2015 call it the forward step / first phase. The root-ward pass
+      ! below is their "STAGE 2: BACKWARD REACHING". Do not "fix" this back.
       !
       ! Each joint is placed relative to the joint BEHIND it in the chain, i.e.
       ! the one just recomputed, NOT relative to the target. Referencing the
@@ -137,9 +143,10 @@ contains
         work(:, i) = work(:, i + 1) + (work(:, i) - work(:, i + 1)) * ratio
       end do
 
-      ! Forward: pin the root, then walk toward the tip preserving each length.
-      ! Anchored chains MUST be re-pinned every iteration, because the backward
-      ! pass above has just overwritten joint 1.
+      ! BACKWARD REACHING: pin the root, then walk toward the tip preserving
+      ! each length. 2011 calls this "STAGE 2: BACKWARD REACHING".
+      ! Anchored chains MUST be re-pinned every iteration, because the forward
+      ! reaching pass above has just overwritten joint 1.
       if (root_anchored /= 0) then
         work(:, 1) = original(:, 1)
       else
