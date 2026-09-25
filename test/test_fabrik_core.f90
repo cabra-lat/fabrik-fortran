@@ -18,7 +18,9 @@ program test_fabrik_core
   call test_minimum_chain(passed, failures)
   call test_randomized_chains(passed, failures)
 
-  print '(a,i0,a,i0,a,i0,a)', 'RESULT: ', merge('PASS', 'FAIL', failures == 0), &
+  ! List-directed output: these summaries mix words and counts, and hand-written
+  ! format strings silently mismatched twice while debugging this suite.
+  print *, 'RESULT: ', merge('PASS', 'FAIL', failures == 0), &
     ' (', passed, ' assertions passed, ', failures, ' failed)'
   if (failures /= 0) error stop 1
 
@@ -263,8 +265,8 @@ contains
     end do
     call expect(ok_count > 0 .and. unreachable_count > 0 .and. unconverged_count > 0, &
       'randomized chains: statuses self-consistent, lengths preserved', passed, failures)
-    print '(a,i0,a,i0,a,i0,a,i0,a)', '  (randomized ', trials, ' chains: ', ok_count, &
-      ' OK, ', unconverged_count, ' not-converged, ', unreachable_count, ' unreachable)'
+    print *, '  (randomized ', trials, ' chains: ', ok_count, ' OK, ', &
+      unconverged_count, ' not-converged, ', unreachable_count, ' unreachable)'
   end subroutine test_randomized_chains
 
   function next_random(state) result(value)
