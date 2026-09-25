@@ -1,0 +1,9 @@
+build/
+build-*/
+.fpm/
+*.o
+*.mod
+*.a
+*.so
+*.dll
+*.dylib

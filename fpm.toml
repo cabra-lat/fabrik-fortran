@@ -1,0 +1,10 @@
+name = "fabrik_core"
+version = "0.1.0"
+license = "MIT"
+author = "fps-basegame contributors"
+description = "Standalone deterministic 3D FABRIK solver with a flat C ABI"
+
+[library]
+
+[fortran]
+implicit-external = false
