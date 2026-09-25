@@ -122,16 +122,29 @@ contains
 
     do iteration = 1, max_iterations
       ! Backward: place the tip on the target and work toward the root.
+      !
+      ! Each joint is placed relative to the joint BEHIND it in the chain, i.e.
+      ! the one just recomputed, NOT relative to the target. Referencing the
+      ! target is only correct for the last segment (where work(:,i+1) is the
+      ! target itself); for every earlier joint it puts the bone at the right
+      ! distance from the wrong point, and it is the reason the anchored root
+      ! used to drift towards the target.
       work(:, joint_count) = target
       do i = joint_count - 1, 1, -1
-        radius = distance(work(:, i), target)
+        radius = distance(work(:, i), work(:, i + 1))
         if (radius <= EPSILON) cycle
         ratio = segment_lengths(i) / radius
-        work(:, i) = target + (work(:, i) - target) * ratio
+        work(:, i) = work(:, i + 1) + (work(:, i) - work(:, i + 1)) * ratio
       end do
 
-      ! Forward: restore the root and segment lengths toward the target.
-      if (root_anchored == 0) work(:, 1) = original(:, joint_count)
+      ! Forward: pin the root, then walk toward the tip preserving each length.
+      ! Anchored chains MUST be re-pinned every iteration, because the backward
+      ! pass above has just overwritten joint 1.
+      if (root_anchored /= 0) then
+        work(:, 1) = original(:, 1)
+      else
+        work(:, 1) = work(:, joint_count)
+      end if
       do i = 1, joint_count - 1
         radius = distance(work(:, i), work(:, i + 1))
         if (radius <= EPSILON) cycle

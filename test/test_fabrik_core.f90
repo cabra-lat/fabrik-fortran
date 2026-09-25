@@ -17,6 +17,7 @@ program test_fabrik_core
   call test_non_finite_input(passed, failures)
   call test_minimum_chain(passed, failures)
   call test_randomized_chains(passed, failures)
+  call test_anchored_root_never_moves(passed, failures)
 
   ! List-directed output: these summaries mix words and counts, and hand-written
   ! format strings silently mismatched twice while debugging this suite.
@@ -70,6 +71,46 @@ contains
     call expect(status == FABRIK_OK .and. residual <= 1.0e-5_real32, &
       'reachable chain converges', passed, failures)
   end subroutine test_convergence
+
+  ! Regression: an anchored chain must keep its root exactly where it was given,
+  ! for a REACHABLE target as well as an unreachable one. The solver used to
+  ! measure every backward-pass joint against the target instead of against the
+  ! joint behind it, and never re-pinned the root, so an anchored chain drifted
+  ! towards its target - which detaches a limb from its shoulder in a rig.
+  subroutine test_anchored_root_never_moves(passed, failures)
+    integer, intent(inout) :: passed, failures
+    real(real32) :: joints(3, 4), target(3), lengths(3), out(3, 4), residual
+    real(real32) :: root_before(3)
+    integer(c_int) :: status
+    integer :: trial
+
+    do trial = 1, 24
+      ! A reachable target, placed deliberately off to one side.
+      joints = reshape([(-0.2_real32 + 0.01_real32 * real(trial, real32)), 1.35_real32, 0.0_real32, &
+                         -0.2_real32 + 0.01_real32 * real(trial, real32), 1.05_real32, 0.0_real32, &
+                         -0.2_real32 + 0.01_real32 * real(trial, real32), 0.79_real32, 0.0_real32, &
+                         -0.2_real32 + 0.01_real32 * real(trial, real32), 0.51_real32, 0.0_real32], [3, 4])
+      lengths = [0.30_real32, 0.26_real32, 0.28_real32]
+      target = [-0.45_real32 + 0.03_real32 * real(trial, real32), 1.20_real32, -0.40_real32]
+      root_before = joints(:, 1)
+      status = solve_f32(joints, 4_c_int, lengths, target, 1_c_int, &
+        1.0e-5_real32, 64_c_int, out, residual)
+      if (status /= FABRIK_OK) then
+        call expect(.false., 'anchored reachable target converges', passed, failures)
+        return
+      end if
+      if (distance_to(out(:, 1), root_before) > 1.0e-5_real32) then
+        call expect(.false., 'anchored root does not move', passed, failures)
+        return
+      end if
+      ! Lengths must still be preserved on an anchored solve.
+      if (abs(distance_to(out(:, 1), out(:, 2)) - lengths(1)) > 1.0e-4_real32) then
+        call expect(.false., 'anchored solve preserves segment lengths', passed, failures)
+        return
+      end if
+    end do
+    call expect(.true., 'anchored root never moves on 24 reachable solves', passed, failures)
+  end subroutine test_anchored_root_never_moves
 
   subroutine test_unreachable_failure(passed, failures)
     integer, intent(inout) :: passed, failures
