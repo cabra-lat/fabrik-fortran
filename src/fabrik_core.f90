@@ -2,14 +2,14 @@ module fabrik_core
   use, intrinsic :: iso_c_binding, only: c_float, c_int
   use, intrinsic :: iso_fortran_env, only: real32
   use, intrinsic :: ieee_arithmetic, only: ieee_is_finite
+  use fabrik_status_codes
   implicit none
   private
 
-  integer(c_int), parameter, public :: FABRIK_OK = 0_c_int
-  integer(c_int), parameter, public :: FABRIK_INVALID_ARGUMENT = 1_c_int
-  integer(c_int), parameter, public :: FABRIK_UNREACHABLE = 2_c_int
-  integer(c_int), parameter, public :: FABRIK_NOT_CONVERGED = 3_c_int
-  integer(c_int), parameter, public :: FABRIK_DEGENERATE_CHAIN = 4_c_int
+  ! Re-exported so `use fabrik_core, only: FABRIK_OK` keeps working: the codes
+  ! have one definition now, in fabrik_status_codes.
+  public :: FABRIK_OK, FABRIK_INVALID_ARGUMENT, FABRIK_UNREACHABLE
+  public :: FABRIK_NOT_CONVERGED, FABRIK_DEGENERATE_CHAIN, FABRIK_CYCLE
 
   real(real32), parameter :: EPSILON = 1.0e-7_real32
 
@@ -187,6 +187,9 @@ contains
       text = "NOT_CONVERGED"
     case (FABRIK_DEGENERATE_CHAIN)
       text = "DEGENERATE_CHAIN"
+    case (6_c_int)
+      ! FABRIK_CYCLE, defined in fabrik_order: a dependency graph with a cycle.
+      text = "CYCLE"
     case default
       text = "UNKNOWN"
     end select

@@ -7,6 +7,7 @@ const char *fabrik_status_string(int32_t status) {
         case FABRIK_UNREACHABLE: return "UNREACHABLE";
         case FABRIK_NOT_CONVERGED: return "NOT_CONVERGED";
         case FABRIK_DEGENERATE_CHAIN: return "DEGENERATE_CHAIN";
+        case FABRIK_CYCLE: return "CYCLE";
         default: return "UNKNOWN";
     }
 }
