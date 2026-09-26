@@ -256,7 +256,11 @@ contains
     do i = 1, 4
       bone_axis = [0.0_real32, 1.0_real32, 0.0_real32]
       direction = q_xform(rotations(:, i), bone_axis)
-      call check(abs(abs(v_dot(direction, v_safe_unit(v_sub(joints(:, i + 1), joints(:, i))))) - 1.0_real32) &
+      ! Positive alignment, deliberately NOT abs(dot): a bone pointing exactly
+      ! backwards along its own segment is a unit quaternion and would slip
+      ! through an abs() check, and it is the signature of a transposed layout
+      ! between the core and whichever engine reads these.
+      call check(abs(v_dot(direction, v_safe_unit(v_sub(joints(:, i + 1), joints(:, i)))) - 1.0_real32) &
           < 1.0e-4_real32, "derived bone +Y points along its segment")
     end do
   end subroutine test_rotations_align_with_their_segments

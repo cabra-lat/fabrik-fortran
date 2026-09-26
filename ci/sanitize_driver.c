@@ -118,6 +118,38 @@ int main(void) {
             for (i = 0; i < 4; i++) norm += quats[i] * quats[i];
             expect(fabsf(norm - 1.0f) < 1.0e-4f, "pipeline: derived rotation is a unit quaternion");
         }
+        /*
+         * The layout is (w, x, y, z) and bone +Y follows the segment. Checking
+         * the DIRECTION here is what the unit-norm check above cannot do: a
+         * transposed layout still yields four unit numbers, and it silently
+         * rotates every bone backwards. This is the exact contract the Godot
+         * adapter depends on, and the constructor it hands them to
+         * (godot-cpp's Quaternion(x, y, z, w)) is not w-first, so getting this
+         * order wrong produces no error at all.
+         */
+        for (i = 0; i < 3; i++) {
+            float u[3] = {quats[i * 4 + 1], quats[i * 4 + 2], quats[i * 4 + 3]};
+            float w = quats[i * 4 + 0];
+            float v[3] = {0.0f, 1.0f, 0.0f};
+            float c[3], t[3], out[3], seg[3];
+            float len;
+            c[0] = u[1] * v[2] - u[2] * v[1];
+            c[1] = u[2] * v[0] - u[0] * v[2];
+            c[2] = u[0] * v[1] - u[1] * v[0];
+            t[0] = u[1] * c[2] - u[2] * c[1];
+            t[1] = u[2] * c[0] - u[0] * c[2];
+            t[2] = u[0] * c[1] - u[1] * c[0];
+            for (int k = 0; k < 3; k++) out[k] = v[k] + 2.0f * w * c[k] + 2.0f * t[k];
+            for (int k = 0; k < 3; k++) seg[k] = chain[i * 3 + 3 + k] - chain[i * 3 + k];
+            len = sqrtf(seg[0] * seg[0] + seg[1] * seg[1] + seg[2] * seg[2]);
+            expect(len > 1.0e-6f, "pipeline: fixture segment is not degenerate");
+            for (int k = 0; k < 3; k++) seg[k] /= len;
+            {
+                float d = out[0] * seg[0] + out[1] * seg[1] + out[2] * seg[2];
+                expect(fabsf(d - 1.0f) < 1.0e-4f,
+                       "pipeline: (w,x,y,z) layout puts bone +Y along its segment");
+            }
+        }
 
         memcpy(previous, quats, sizeof(quats));
         status = fabrik_smooth_rotations_f32(chain, 4, seg, previous, quats, 0.0f,
