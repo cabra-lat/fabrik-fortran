@@ -81,6 +81,16 @@ int32_t fabrik_residual_f32(
 );
 
 /*
+ * Per-joint FLEXION angle in degrees: 0 is straight, 180 is folded back on
+ * itself. The two ends have no such angle and report 0.
+ */
+int32_t fabrik_joint_angles_f32(
+    const float *joints,
+    int32_t joint_count,
+    float *out_angles
+);
+
+/*
  * Rotate the intermediate joints about the root-to-tip axis so the bend faces
  * pole_target. Root and tip are fixed and every segment length is preserved. A
  * zero pole target is a no-op.

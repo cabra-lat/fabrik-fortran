@@ -21,6 +21,7 @@ module fabrik_pipeline_c_api
   use, intrinsic :: iso_fortran_env, only: real32
   use, intrinsic :: ieee_arithmetic, only: ieee_is_finite
   use fabrik_status_codes
+  use fabrik_geom
   use fabrik_pipeline
   use fabrik_order
   implicit none
@@ -84,6 +85,37 @@ contains
         real(target_xyz, real32)), c_float)
     status = FABRIK_OK
   end function fabrik_residual_f32
+
+  integer(c_int) function fabrik_joint_angles_f32(joints, joint_count, out_angles) &
+      result(status) bind(c, name="fabrik_joint_angles_f32")
+    real(c_float), intent(in) :: joints(*)
+    integer(c_int), value :: joint_count
+    ! Explicitly shaped rather than assumed-size, so the loop below can index it
+    ! without the last dimension appearing in every reference.
+    real(c_float), intent(out) :: out_angles(joint_count)
+    real(c_float) :: flat(3 * joint_count)
+    real(real32) :: joints_2d(3, joint_count)
+    integer :: i
+
+    if (joint_count < 2) then
+      status = FABRIK_INVALID_ARGUMENT
+      return
+    end if
+    flat = joints(1:3 * joint_count)
+    joints_2d = reshape(flat, [3, joint_count])
+    if (.not. screens_finite(reshape(joints_2d, [3 * joint_count]))) then
+      status = FABRIK_INVALID_ARGUMENT
+      return
+    end if
+    ! The two ends have no flexion angle, so they report 0 rather than a
+    ! meaningless 180 a caller would have to special-case.
+    out_angles = 0.0_c_float
+    do i = 2, int(joint_count) - 1
+      out_angles(i) = real(interior_angle_degrees(joints_2d(:, i - 1), joints_2d(:, i), &
+          joints_2d(:, i + 1)), c_float)
+    end do
+    status = FABRIK_OK
+  end function fabrik_joint_angles_f32
 
   integer(c_int) function fabrik_apply_pole_f32(joints, joint_count, pole_xyz, out_joints) &
       result(status) bind(c, name="fabrik_apply_pole_f32")
